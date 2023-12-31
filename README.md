@@ -3,6 +3,10 @@
 ## Improvements
 ### GPU Support for CUDA users
 ### SlideMatch algorithm (OpenCV)
+## Requirements
+ONNX Runtime Version	| CUDA Toolkit Version	| cuDNN Version 
+-------- | ----------- | ----- 
+1.16	| 11.6	| 8.5.0.96 
 ## Annotations 
 ### based on .NET8.0
 C# open source project built on dddddocr based on SML2H3's open-source. The source project only provides a pypi version and cannot meet the needs of C# developers. Therefore, i'm attempting to develop this project. 
