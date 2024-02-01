@@ -16927,8 +16927,7 @@ namespace ddddocrsharp
                 try
                 {
                     // Assuming GetTarget is a method that returns a Bitmap, targetX and targetY
-                    (Bitmap targetBitmap, targetX, targetY) = GetTarget(targetBytes);
-                    target = OpenCvSharp.Extensions.BitmapConverter.ToMat(targetBitmap);
+                    (target, targetX, targetY) = GetTarget(targetBytes);
                 }
                 catch (Exception e)
                 {
@@ -16968,29 +16967,32 @@ namespace ddddocrsharp
         { "target", new int[] { maxLoc.X, maxLoc.Y, bottomRight.X, bottomRight.Y } }
     };
         }
-        public (Bitmap, int, int) GetTarget(byte[] imgBytes = null)
+        public (Mat, int, int) GetTarget(byte[] imgBytes = null)
         {
+
             using (var ms = new MemoryStream(imgBytes))
             {
-                var image = new Bitmap(ms);
-                int w = image.Width, h = image.Height;
-                int starttx = 0, startty = 0, endX = 0, endY = 0;
+                var image = Mat.FromStream(ms, ImreadModes.AnyColor);
 
-                for (int x = 0; x < w; x++)
+                int w = image.Width, h = image.Height;
+                int starttx = 0, startty = 0, endX = 0, endY = 0, endynext = 0, endxnext = 0;
+
+                for (int x = 0; x < w; ++x)
                 {
-                    for (int y = 0; y < h; y++)
+                    for (int y = 0; y < h; ++y)
                     {
-                        var p = image.GetPixel(x, y);
-                        if (p.A == 0)
+                        var p = image.Get<Vec4b>(y, x);
+
+                        if (p.Item2 == 0)
                         {
-                            if (startty != 0 && endY == 0)
+                            if (startty != 0 && endY < endynext)
                             {
-                                endY = y;
+                                endY = endynext;
                             }
 
-                            if (starttx != 0 && endX == 0)
+                            if (starttx != 0 && endxnext > endX)
                             {
-                                endX = x;
+                                endX = endxnext;
                             }
                         }
                         else
@@ -16998,6 +17000,7 @@ namespace ddddocrsharp
                             if (startty == 0)
                             {
                                 startty = y;
+
                                 endY = 0;
                             }
                             else
@@ -17005,25 +17008,36 @@ namespace ddddocrsharp
                                 if (y < startty)
                                 {
                                     startty = y;
+                                    endynext = 0;
                                     endY = 0;
                                 }
-                            }
-                        }
-                    }
+                                else
+                                {
 
+                                    endynext = y;
+                                }
+                            }
+                            if (starttx != 0 && endxnext < x)
+                            {
+                                endxnext = x;
+                            }
+
+                        }
+
+                    }
                     if (starttx == 0 && startty != 0)
                     {
                         starttx = x;
                     }
 
-                    if (endY != 0)
+                    if (endY != 0 && endxnext > endX)
                     {
-                        endX = x;
+                        endX = endxnext;
                     }
                 }
 
-                var rect = new Rectangle(starttx, startty, endX - starttx, endY - startty);
-                return (image.Clone(rect, image.PixelFormat), starttx, startty);
+                var rect = new Rect(starttx, startty, endX - starttx + 1, endY - startty + 1);
+                return (image.Clone(rect), starttx, startty);
             }
         }
     }
