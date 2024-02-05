@@ -16916,6 +16916,45 @@ namespace ddddocrsharp
             return ret;
         }
 
+        public Dictionary<string, Point> Slide_Comparison(Mat target, Mat background)
+        {
+            int start_x = 0, start_y = 0, mcount = 0;
+            // 将图像转换为灰度图，以便进行差异计算
+
+            background = background.CvtColor(ColorConversionCodes.BGR2GRAY);
+            target = target.CvtColor(ColorConversionCodes.BGR2GRAY);
+
+            // 计算灰度图像的差异  
+            Mat difference = new Mat();
+            Cv2.Absdiff(background, target, difference); // 使用OpenCV的AbsDiff方法来计算差异  
+
+            difference = difference.Threshold(80, 255, ThresholdTypes.Binary);
+            for (var i = 0; i < difference.Width; i++)
+            {
+                mcount = 0;
+                for (var j = 0; j < difference.Height; j++)
+                {
+                    var p = difference.Get<Vec3b>(j, i);
+                    if (p.Item2 != 0)
+                    {
+                        mcount += 1;
+                    }
+                    if (mcount >= 5 && start_y == 0)
+                    {
+                        start_y = j - 5;
+                    }
+                }
+                if (mcount > 5)
+                {
+                    start_x = i + 2;
+                    break;
+                }
+            }
+            Point point = new Point(start_x, start_y);
+            return new Dictionary<string, Point>() { { "target", point } };
+        }
+
+
 
         public Dictionary<string, object> SlideMatch(byte[] targetBytes = null, byte[] backgroundBytes = null, bool simpleTarget = false, bool flag = false)
         {
